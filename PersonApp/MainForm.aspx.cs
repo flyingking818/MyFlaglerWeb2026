@@ -146,8 +146,9 @@ namespace MyFlaglerWeb2026.PersonApp
         {
             // Read connection string from Web.config
             string connString = ConfigurationManager.ConnectionStrings["PersonApp"].ConnectionString;
+            //string connString = "db=...dfadfdfadsfdaf"; NEVER NEVER do this!!
 
-            // Create connection to PostgreSQL
+            // Create connection to PostgreSQL  //running time protection.
             using (NpgsqlConnection conn = new NpgsqlConnection(connString))
             {
                 conn.Open(); // must open connection before executing SQL
@@ -175,6 +176,7 @@ namespace MyFlaglerWeb2026.PersonApp
 
                             // Execute query and get generated person_id
                             int personID = Convert.ToInt32(cmdPerson.ExecuteScalar());
+                           //cmdperson.ExecuteNonQuery();
 
                             // STEP 2: Insert into subtype table (example: Professor)
                             // Each role has its own table with additional fields
@@ -188,7 +190,7 @@ namespace MyFlaglerWeb2026.PersonApp
 
                                 using (NpgsqlCommand cmd = new NpgsqlCommand(insertProfessorSql, conn, transaction))
                                 {
-                                    // Link to persons table
+                                    // Link to persons table (this would be the foreign key in the Person table)
                                     cmd.Parameters.AddWithValue("@person_id", personID);
 
                                     // Professor-specific fields
@@ -225,19 +227,21 @@ namespace MyFlaglerWeb2026.PersonApp
                                 using (NpgsqlCommand cmd = new NpgsqlCommand(insertStaffSql, conn, transaction))
                                 {
                                     cmd.Parameters.AddWithValue("@person_id", personID);
-                                    cmd.Parameters.AddWithValue("@position", staff.Position ?? (object)DBNull.Value);
+                                    cmd.Parameters.AddWithValue("@position", staff.Position ?? (object)DBNull.Value);  //optionals
                                     cmd.Parameters.AddWithValue("@division", staff.Division ?? (object)DBNull.Value);
                                     cmd.Parameters.AddWithValue("@is_administrative", staff.IsAdministrative);
 
                                     cmd.ExecuteNonQuery();
                                 }
                             }
+
+                            //Classes match the relational tables!!! Entity Framework approach!
                         }
 
                         // Save all changes permanently
                         transaction.Commit();
 
-                        lblResult.Text += "Profile saved to Supabase database.View Summary";
+                        lblResult.Text += "Profile saved to Supabase database. <a href=\"Summary.aspx\">View Summary</a>";
                     }
                     catch (Exception ex)
                     {
